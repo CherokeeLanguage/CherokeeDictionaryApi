@@ -11,6 +11,10 @@ compileJava.options.encoding = 'UTF-8'
 
 farm {
   webapp ':'
+  /*def CherokeeDictionary = '../../CherokeeDictionary/CherokeeDictionary/build/libs/CherokeeDictionary.war'
+  if (new file(CherokeeDictionary).exists()) {
+  	
+  }*/
 }
 
 def RTJAR = '/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar';
