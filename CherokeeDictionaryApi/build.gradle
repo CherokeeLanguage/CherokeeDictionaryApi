@@ -1,0 +1,155 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'org.akhikhl.gretty'
+
+version = '20160129'
+
+sourceCompatibility = 1.7
+compileJava.options.encoding = 'UTF-8'
+
+farm {
+  webapp ':'
+}
+
+def RTJAR = '/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar';
+if (new File(RTJAR).exists()) {
+	compileJava.options.bootClasspath=RTJAR
+}
+
+buildscript {
+	repositories {
+        jcenter()
+        maven { url 'http://repo.spring.io/plugins-release' }
+    }
+    dependencies {
+        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+        classpath 'org.akhikhl.gretty:gretty:+'
+        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.6'
+    }
+}
+
+war {
+	archiveName 'CherokeeDictionaryApi.war'
+}
+
+
+gretty {
+	port = 8080;
+	servletContainer = 'tomcat7'
+	managedClassReload = false
+	extraResourceBase 'build/gwt/out'
+}
+
+repositories {
+    jcenter()
+    maven {
+		url "https://github.com/psiegman/mvn-repo/raw/master/releases"
+	}
+}
+
+configurations {
+  provided
+}
+
+dependencies {
+	providedCompile 'javax.servlet:javax.servlet-api:3.0.1'
+	compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
+	compile 'org.glassfish.jersey.containers:jersey-container-servlet:+'
+	compile 'org.glassfish.jersey.media:jersey-media-json-jackson:+'
+	compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:+'
+		
+	//commons
+	//compile 'commons-codec:commons-codec:1.10'
+	//compile 'commons-io:commons-io:2.4'
+	//compile 'org.apache.commons:commons-lang3:+'
+	//compile 'commons-validator:commons-validator:1.4.1'
+	//compile 'commons-logging:commons-logging:1.2'
+	//compile 'org.apache.commons:commons-collections4:4.0'
+}
+ 
+
+ 
+sourceSets {
+  main {
+    compileClasspath += configurations.provided
+  }
+  test {
+    compileClasspath += configurations.provided
+    runtimeClasspath += configurations.provided
+  }
+}
+
+
+
+task "create-dirs" << {
+	sourceSets*.java.srcDirs*.each { it.mkdirs() }
+	sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+}
+
+
+
+eclipseJdt << {
+    File f = file('.settings/org.eclipse.core.resources.prefs')
+    f.write('eclipse.preferences.version=1\n')
+    f.append('encoding/<project>=utf-8')
+    f = file('.settings/org.eclipse.core.runtime.prefs')
+    f.write('eclipse.preferences.version=1\n')
+    f.append('line.separator=\\n\n')
+}
+
+eclipse {
+	project {
+		name = 'CherokeeDictionaryApi'
+		//referencedProjects 'XigniteSdk', 'SHARED-DAO'
+		natures 'org.springsource.ide.eclipse.gradle.core.nature'
+		webAppDirName = 'src/main/webapp'
+	}
+
+	classpath {
+		plusConfigurations += [configurations.provided]
+		containers += ['org.springsource.ide.eclipse.gradle.classpathcontainer']
+		downloadSources = true
+		downloadJavadoc = true
+	}
+
+	jdt {
+		sourceCompatibility=1.7
+		targetCompatibility=1.7
+	}
+
+	wtp {
+		facet {
+			facets = []
+			facet name: 'jst.java', version: '1.7'
+			facet name: 'jst.web', version: '3.0'
+		}
+	}
+}
+
+project.afterEvaluate {
+	// use jre lib matching version used by project, not the workspace default
+	if (sourceCompatibility != null) {
+		def target = project.sourceCompatibility.toString()
+		def containerPrefix = "org.eclipse.jdt.launching.JRE_CONTAINER"
+		def containerSuffix
+		if (target =~ /1.[4-5]/) {
+			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + target
+		} else if (target =~ /1.[6-8]/) {
+			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + target
+		}
+		if (containerSuffix != null) {
+			project.eclipse.classpath {
+				containers.removeAll { it.startsWith(containerPrefix) }
+				containers.add(containerPrefix + containerSuffix)
+			}
+		}
+	}
+}
+
+configurations.all {
+        resolutionStrategy {
+            force 'xml-apis:xml-apis:1.4.01'
+        }
+    }
