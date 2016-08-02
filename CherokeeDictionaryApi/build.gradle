@@ -3,7 +3,9 @@ apply plugin: 'war'
 apply plugin: 'eclipse'
 apply plugin: 'eclipse-wtp'
 apply plugin: 'org.akhikhl.gretty'
+apply plugin: 'maven'
 
+group = 'com.github.CherokeeLanguage'
 version = '20160129'
 
 sourceCompatibility = 1.7
